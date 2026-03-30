@@ -1,41 +1,49 @@
-Agent Thoughts: Transparency vs. Noise
-Decision: I decided to show thoughts, but keep them collapsed by default inside each task.
+1. Agent Thoughts
 
-Why: Analysts mostly care about results. But if everything feels like a black box, trust drops. So this way, thoughts are there when needed, but not in your face all the time.
+I chose to hide agent thoughts by default and make them expandable per task.
 
-Reconsider if: Users start ignoring results because they don’t understand the “why” behind it.
+During early iterations, always showing thoughts made the interface feel noisy and overly technical. Since the primary user here is an analyst (not a developer debugging the system), exposing raw reasoning continuously reduced clarity and distracted from the actual progress of the run.
 
-Parallel Execution: Visual Grouping
-Decision: Tasks with a parallel_group ID go into a separate “Parallel Action” card, shown horizontally.
+By moving thoughts behind a toggle, the interface stays clean and readable, while still allowing deeper inspection when needed. This also mirrors how analysts typically work — they focus on results first, and only dig into reasoning when something looks off.
 
-Why: If I stack them vertically, it looks like steps happening one after another, which is misleading. Horizontal layout makes it clear things are happening at the same time.
+If future user feedback shows that analysts rely heavily on reasoning for trust, I would consider surfacing a summarized version of thoughts inline instead of raw logs.
 
-Reconsider if: There are too many parallel tasks (like more than 3–4), because that will break the layout, especially on smaller screens.
+2. Parallel Task Layout
 
-Partial Outputs: The “Live” Feed
-Decision: I stream is_final: false content directly into the task body, and replace it when final output comes.
+I chose to visually group tasks with the same parallel_group into a shared container instead of rendering them as a flat list.
 
-Why: It gives that live/typing feel like LLMs. Makes things feel faster and gives small bits of useful info early instead of waiting.
+A purely vertical list made parallel execution look sequential, which was misleading. Grouping tasks together makes it immediately clear that these tasks were initiated at the same time and are progressing independently.
 
-Reconsider if: Intermediate outputs are messy or unreliable, which might make users trust the system less.
+Within the group, tasks still follow a vertical layout to maintain readability, but the grouping container provides enough context to distinguish parallel execution from sequential flow.
 
-Handling “Cancelled” States
-Decision: For sufficient_data cancellations, I used a muted blue theme with an info icon, not a warning.
+If the number of parallel tasks grows significantly, I would consider switching to a horizontal or grid layout to better utilize space and reinforce simultaneity.
 
-Why: “Cancelled” sounds like failure, especially in finance. But here it’s actually a smart stop — system already got enough data. So it should feel like optimization, not error.
+3. Partial Outputs (is_final: false)
 
-Reconsider if: Users keep asking why something “failed” even though it didn’t.
+I chose to render partial outputs inline as progressive logs within each task, while visually distinguishing them from final outputs.
 
-Dependencies & Lifecycle
-Decision: Tasks with depends_on show as “Locked/Waiting”.
+Completely hiding intermediate outputs made the system feel like a black box, while showing them as raw logs without structure created noise. The current approach balances both — users can see progress happening in real time without losing focus.
 
-Why: Otherwise it’s confusing why some tasks haven’t started. This makes it clear they’re waiting on something else (like peer data).
+Final outputs are styled more prominently to clearly indicate completion, while intermediate outputs are treated as supporting context.
 
-Reconsider if: Dependencies become too complex. Then maybe a small flowchart or DAG view is needed.
+If users indicate that intermediate outputs are not useful, I would consider collapsing them by default or summarizing them instead of showing all entries.
 
-Error Recovery (Fail & Retry)
-Decision: If a task fails but retry is pending, I show amber instead of red, with a countdown.
+4. Cancelled State (reason: "sufficient_data")
 
-Why: Red feels like dead end. Amber feels like “it’s fixing itself”, which builds trust.
+I chose to represent cancelled tasks as a neutral state (muted styling, no error indicators) with a short explanatory message.
 
-Reconsider if: Retries happen too often (like API limits), making the UI look noisy or distracting.
+Although the status is technically "cancelled", it is actually a positive outcome — the system determined that enough data was already available. Using error colors (like red) created confusion and suggested failure, which is misleading.
+
+The UI instead communicates that the task was intentionally stopped, not failed. This helps maintain user trust and prevents unnecessary concern.
+
+If additional cancellation reasons are introduced in the future, I would differentiate between “intentional” and “error-driven” cancellations more explicitly.
+
+5. Task Dependency Awareness
+
+I chose to respect dependency order implicitly through rendering sequence rather than explicitly visualizing dependencies.
+
+Drawing dependency graphs or connectors added visual complexity without significantly improving understanding for the target user. Instead, tasks are displayed in an order that reflects their execution flow, ensuring that dependent tasks appear after their prerequisites.
+
+This keeps the UI simple while still maintaining logical consistency.
+
+If analysts need deeper visibility into execution structure (e.g., debugging complex runs), I would consider adding an optional dependency view or graph overlay
