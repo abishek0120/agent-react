@@ -6,7 +6,7 @@ import Header from "./components/Header";
 import Tasklist from "./components/Tasklist";
 import Output from "./components/output";
 import Thoughts from "./components/thoughts";
-import Emptystate from "./components/emptystate";
+// import Emptystate from "./components/emptystate";
 
 function App() {
   const [run, setRun] = useState(null);
@@ -34,6 +34,14 @@ function App() {
 
     return () => clearInterval(interval);
   }, [run]);
+
+  const Emptystate = () => {
+  return (
+    <div className="h-screen flex items-center justify-center text-gray-500">
+      No run started
+    </div>
+  );
+};
 
   const handleEvent = (event) => {
     switch (event.type) {
