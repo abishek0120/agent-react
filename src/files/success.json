@@ -1,0 +1,135 @@
+[
+  { "type": "run_started", "query": "Analyse Apple R&D", "timestamp": 1 },
+
+  { "type": "agent_thought", "task_id": "coordinator", "thought": "Breaking into tasks", "timestamp": 2 },
+
+  {
+    "type": "task_spawned",
+    "task_id": "t1",
+    "label": "Fetch Apple Data",
+    "agent": "fetcher",
+    "parallel_group": null,
+    "depends_on": [],
+    "timestamp": 3
+  },
+
+  { "type": "task_update", "task_id": "t1", "status": "running", "timestamp": 4 },
+
+  {
+    "type": "partial_output",
+    "task_id": "t1",
+    "content": "Apple R&D growing...",
+    "is_final": false,
+    "timestamp": 5
+  },
+
+  { "type": "task_update", "task_id": "t1", "status": "complete", "timestamp": 6 },
+
+  {
+    "type": "task_spawned",
+    "task_id": "t2",
+    "label": "Fetch Microsoft",
+    "agent": "fetcher",
+    "parallel_group": "g1",
+    "depends_on": [],
+    "timestamp": 7
+  },
+  {
+    "type": "task_spawned",
+    "task_id": "t3",
+    "label": "Fetch Google",
+    "agent": "fetcher",
+    "parallel_group": "g1",
+    "depends_on": [],
+    "timestamp": 7
+  },
+  {
+    "type": "task_spawned",
+    "task_id": "t4",
+    "label": "Fetch Meta",
+    "agent": "fetcher",
+    "parallel_group": "g1",
+    "depends_on": [],
+    "timestamp": 7
+  },
+
+  { "type": "task_update", "task_id": "t2", "status": "running", "timestamp": 8 },
+  { "type": "task_update", "task_id": "t3", "status": "running", "timestamp": 8 },
+  { "type": "task_update", "task_id": "t4", "status": "running", "timestamp": 8 },
+
+  {
+    "type": "task_update",
+    "task_id": "t4",
+    "status": "failed",
+    "error": "Rate limit",
+    "timestamp": 9
+  },
+  { "type": "task_update", "task_id": "t4", "status": "running", "timestamp": 10 },
+  {
+    "type": "task_update",
+    "task_id": "t4",
+    "status": "cancelled",
+    "reason": "sufficient_data",
+    "timestamp": 11
+  },
+
+
+  {
+    "type": "partial_output",
+    "task_id": "t2",
+    "content": "Microsoft R&D stable",
+    "is_final": true,
+    "timestamp": 12
+  },
+  { "type": "task_update", "task_id": "t2", "status": "complete", "timestamp": 13 },
+
+  {
+    "type": "partial_output",
+    "task_id": "t3",
+    "content": "Google R&D high",
+    "is_final": true,
+    "timestamp": 14
+  },
+  { "type": "task_update", "task_id": "t3", "status": "complete", "timestamp": 15 },
+
+  
+  {
+    "type": "task_spawned",
+    "task_id": "t5",
+    "label": "Synthesis",
+    "agent": "coordinator",
+    "depends_on": ["t1", "t2", "t3"],
+    "timestamp": 16
+  },
+
+  {
+    "type": "agent_thought",
+    "task_id": "t5",
+    "thought": "Combining all data",
+    "timestamp": 17
+  },
+
+  {
+    "type": "partial_output",
+    "task_id": "t5",
+    "content": "Apple vs peers...",
+    "is_final": false,
+    "timestamp": 18
+  },
+
+  {
+    "type": "partial_output",
+    "task_id": "t5",
+    "content": "Final summary ready",
+    "is_final": true,
+    "timestamp": 19
+  },
+
+  { "type": "task_update", "task_id": "t5", "status": "complete", "timestamp": 20 },
+
+  {
+    "type": "run_complete",
+    "output": { "summary": "Apple R&D strong vs peers." },
+    "timestamp": 21
+  }
+]

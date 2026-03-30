@@ -1,0 +1,16 @@
+:root {
+  /* COLORS (you can tweak easily) */
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-text: #e2e8f0;
+
+  --color-running: #3b82f6;   /* blue */
+  --color-complete: #22c55e;  /* green */
+  --color-failed: #ef4444;    /* red */
+  --color-cancelled: #94a3b8; /* neutral gray */
+
+  --color-accent: #8b5cf6;    /* violet (optional) */
+
+  /* spacing */
+  --radius: 12px;
+}
