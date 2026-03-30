@@ -3,20 +3,17 @@ import { runEmitter } from "./files/emitter";
 import events from "./files/success.json";
 
 import Header from "./components/Header";
-import Tasklist from "./components/Tasklist";
 import Output from "./components/output";
-import Thoughts from "./components/thoughts";
-// import Emptystate from "./components/emptystate";
 
 function App() {
   const [run, setRun] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [thought, setThought] = useState("");
   const [output, setOutput] = useState(null);
   const [time, setTime] = useState(0);
+  const [logs, setLogs] = useState([]);
 
   const hasRun = useRef(false);
 
+  // 🚀 Prevent double run (React StrictMode fix)
   useEffect(() => {
     if (hasRun.current) return;
     hasRun.current = true;
@@ -24,7 +21,7 @@ function App() {
     runEmitter(events, handleEvent);
   }, []);
 
-  // ⏱ TIMER
+  // ⏱ Timer
   useEffect(() => {
     if (!run || run.status !== "running") return;
 
@@ -35,74 +32,80 @@ function App() {
     return () => clearInterval(interval);
   }, [run]);
 
-  const Emptystate = () => {
-  return (
-    <div className="h-screen flex items-center justify-center text-gray-500">
-      No run started
-    </div>
-  );
-};
+  // 🧠 Add log entry
+  const addLog = (type, message, status = "info") => {
+    setLogs((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        time: new Date().toLocaleTimeString(),
+        type,
+        message,
+        status
+      }
+    ]);
+  };
 
+  // ⚡ Event handler
   const handleEvent = (event) => {
     switch (event.type) {
       case "run_started":
         setRun({ query: event.query, status: "running" });
+        addLog("run", `Run started: ${event.query}`, "running");
         break;
 
       case "agent_thought":
-        setThought(event.thought);
+        addLog("thought", `💡 ${event.thought}`, "info");
         break;
 
       case "task_spawned":
-        setTasks((prev) => [
-          ...prev,
-          {
-            id: event.task_id,
-            label: event.label,
-            agent: event.agent,
-            status: "pending",
-            outputs: [],
-            parallel_group: event.parallel_group || null,
-            depends_on: event.depends_on || []
-          }
-        ]);
-        break;
-
-      case "task_update":
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === event.task_id
-              ? {
-                  ...t,
-                  status: event.status,
-                  error: event.error || null,
-                  reason: event.reason || null
-                }
-              : t
-          )
+        addLog(
+          "task",
+          `Task started → ${event.label} (${event.agent})`,
+          "running"
         );
         break;
 
+      case "task_update":
+        if (event.status === "failed") {
+          addLog(
+            "task",
+            `❌ Task failed → ${event.task_id}: ${event.error}`,
+            "failed"
+          );
+        } else if (event.status === "cancelled") {
+          addLog(
+            "task",
+            `⚠ Task cancelled → ${event.task_id} (${event.reason})`,
+            "cancelled"
+          );
+        } else if (event.status === "complete") {
+          addLog(
+            "task",
+            `✅ Task completed → ${event.task_id}`,
+            "complete"
+          );
+        } else {
+          addLog(
+            "task",
+            `⏳ Task running → ${event.task_id}`,
+            "running"
+          );
+        }
+        break;
+
       case "partial_output":
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === event.task_id
-              ? {
-                  ...t,
-                  outputs: event.is_final
-                    ? [event.content]
-                    : t.outputs.includes(event.content)
-                    ? t.outputs
-                    : [...t.outputs, event.content]
-                }
-              : t
-          )
+        addLog(
+          "output",
+          event.content,
+          event.is_final ? "complete" : "info"
         );
         break;
 
       case "run_complete":
         setRun((prev) => ({ ...prev, status: "complete" }));
         setOutput(event.output.summary);
+        addLog("run", "🎉 Run completed successfully", "complete");
         break;
 
       default:
@@ -110,40 +113,97 @@ function App() {
     }
   };
 
-  if (!run) return <Emptystate />;
+  // ❌ Empty state
+  if (!run) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-500 bg-black">
+        No run started
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col">
 
       {/* HEADER */}
-      <div className="border-b border-slate-700 p-4">
+      <div className="border-b border-gray-800 p-4">
         <Header run={run} time={time} />
       </div>
 
-      {/* THOUGHT */}
-      {thought && (
-        <div className="border-b border-slate-700 p-3">
-          <Thoughts thought={thought} />
-        </div>
-      )}
-
-      {/* MAIN */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* TASK SECTION */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-xs text-gray-400 mb-2">Task Execution</p>
-          <Tasklist tasks={tasks} />
-        </div>
-
-        {/* OUTPUT */}
-        <div className="border-t border-slate-700 p-4 bg-slate-800">
-          <Output output={output} />
-        </div>
-
+      {/* LOG TERMINAL */}
+      <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+        
+        <LogView logs={logs} />
       </div>
+
+      {/* FINAL OUTPUT */}
+      <div className="border-t border-gray-800 p-4 bg-[#0f0f0f]">
+        <Output output={output} />
+      </div>
+
     </div>
   );
 }
 
 export default App;
+
+
+
+const getColor = (status) => {
+  switch (status) {
+    case "running":
+      return "text-blue-400";
+    case "complete":
+      return "text-green-400";
+    case "failed":
+      return "text-red-400";
+    case "cancelled":
+      return "text-yellow-400";
+    default:
+      return "text-gray-400";
+  }
+};
+
+const LogView = ({ logs }) => {
+  const bottomRef = useRef();
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  return (
+    <div className="space-y-1">
+
+      {/* LIVE INDICATOR */}
+      <div className="text-green-400 text-xs mb-2">
+        ● live execution logs
+      </div>
+
+      {logs.map((log) => (
+        <div
+          key={log.id}
+          className="flex gap-3 text-xs leading-relaxed"
+        >
+          {/* TIME */}
+          <span className="text-gray-500 w-20 shrink-0">
+            {log.time}
+          </span>
+
+          {/* STATUS */}
+          <span className={`${getColor(log.status)} w-24 shrink-0`}>
+            <br />
+            [{log.status}]
+          </span>
+
+          {/* MESSAGE */}
+          <span className="text-gray-200 break-words">
+            <h5>-----------------------------------</h5>
+            {log.message}
+          </span>
+        </div>
+      ))}
+
+      <div ref={bottomRef} />
+    </div>
+  );
+};
