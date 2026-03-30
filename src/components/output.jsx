@@ -1,5 +1,11 @@
 const Output = ({ output }) => {
-  if (!output) return null;
+  if (!output) {
+    return (
+      <div className="text-sm text-gray-500">
+        Waiting for final result...
+      </div>
+    );
+  }
 
   return (
     <div className="bg-green-900/40 p-4 rounded border border-green-700">

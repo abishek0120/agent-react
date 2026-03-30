@@ -1,4 +1,4 @@
-const Header = ({ run }) => {
+const Header = ({ run, time }) => {
   return (
     <div className="flex justify-between items-center">
 
@@ -10,7 +10,7 @@ const Header = ({ run }) => {
       </div>
 
       <div className="text-sm text-gray-400">
-        ⏱ Running
+        ⏱ {time}s
       </div>
 
     </div>

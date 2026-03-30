@@ -7,38 +7,34 @@ const getStatusColor = (status) => {
     case "failed":
       return "text-red-400";
     case "cancelled":
-      return "text-gray-400"; // IMPORTANT: neutral
+      return "text-gray-400";
     default:
       return "text-gray-300";
   }
 };
 
-const getStatusBg = (status) => {
+const getStatusLabel = (status) => {
   switch (status) {
     case "running":
-      return "bg-blue-900/20";
+      return "Running...";
     case "complete":
-      return "bg-green-900/20";
+      return "Completed";
     case "failed":
-      return "bg-red-900/20";
+      return "Failed";
     case "cancelled":
-      return "bg-gray-700/20";
+      return "Stopped (enough data)";
     default:
-      return "bg-slate-800";
+      return status;
   }
 };
 
 const Taskcard = ({ task }) => {
   return (
-    <div
-      className={`p-4 rounded-md border border-slate-700 ${getStatusBg(
-        task.status
-      )}`}
-    >
-      {/* TOP SECTION */}
+    <div className="bg-slate-800 p-4 rounded-md border border-slate-700">
+
+      {/* HEADER */}
       <div className="flex justify-between items-start mb-2">
 
-        {/* LEFT */}
         <div>
           <h3 className="font-medium text-sm">{task.label}</h3>
           <p className="text-xs text-gray-400">
@@ -46,14 +42,13 @@ const Taskcard = ({ task }) => {
           </p>
         </div>
 
-        {/* RIGHT STATUS */}
         <div className={`text-xs font-medium ${getStatusColor(task.status)}`}>
-          {task.status}
+          {getStatusLabel(task.status)}
         </div>
 
       </div>
 
-      {/* DEPENDENCY (subtle, optional) */}
+      {/* DEPENDENCIES */}
       {task.depends_on && task.depends_on.length > 0 && (
         <p className="text-xs text-gray-500 mb-2">
           depends on: {task.depends_on.join(", ")}
@@ -74,13 +69,13 @@ const Taskcard = ({ task }) => {
         </p>
       )}
 
-      {/* OUTPUTS */}
+      {/* OUTPUT */}
       <div className="flex flex-col gap-1 text-sm text-gray-300">
 
         {task.outputs.length === 0 && task.status === "running" && (
-          <p className="text-xs text-gray-500 italic">
+          <span className="text-xs text-gray-500 italic animate-pulse">
             processing...
-          </p>
+          </span>
         )}
 
         {task.outputs.map((o, i) => (

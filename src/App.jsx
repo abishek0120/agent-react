@@ -1,4 +1,4 @@
-import { useEffect, useState ,useRef} from "react";
+import { useEffect, useState, useRef } from "react";
 import { runEmitter } from "./files/emitter";
 import events from "./files/success.json";
 
@@ -13,13 +13,27 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [thought, setThought] = useState("");
   const [output, setOutput] = useState(null);
+  const [time, setTime] = useState(0);
+
   const hasRun = useRef(false);
 
-useEffect(() => {
-  if (hasRun.current) return;  
-  hasRun.current = true;
+  useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     runEmitter(events, handleEvent);
-}, []);
+  }, []);
+
+  // ⏱ TIMER
+  useEffect(() => {
+    if (!run || run.status !== "running") return;
+
+    const interval = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [run]);
 
   const handleEvent = (event) => {
     switch (event.type) {
@@ -31,51 +45,52 @@ useEffect(() => {
         setThought(event.thought);
         break;
 
-    case "task_spawned":
-  setTasks((prev) => [
-    ...prev,
-    {
-      id: event.task_id,
-      label: event.label,
-      agent: event.agent,
-      status: "pending",
-      outputs: [],
-      parallel_group: event.parallel_group,
-      depends_on: event.depends_on || []
-    }
-  ]);
-  break;
-
-case "task_update":
-  setTasks((prev) =>
-    prev.map((t) =>
-      t.id === event.task_id
-        ? {
-            ...t,
-            status: event.status,
-            error: event.error || null,
-            reason: event.reason || null
+      case "task_spawned":
+        setTasks((prev) => [
+          ...prev,
+          {
+            id: event.task_id,
+            label: event.label,
+            agent: event.agent,
+            status: "pending",
+            outputs: [],
+            parallel_group: event.parallel_group || null,
+            depends_on: event.depends_on || []
           }
-        : t
-    )
-  );
-  break;
+        ]);
+        break;
 
+      case "task_update":
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === event.task_id
+              ? {
+                  ...t,
+                  status: event.status,
+                  error: event.error || null,
+                  reason: event.reason || null
+                }
+              : t
+          )
+        );
+        break;
 
-case "partial_output":
-  setTasks((prev) =>
-    prev.map((t) =>
-      t.id === event.task_id
-        ? {
-            ...t,
-            outputs: t.outputs.includes(event.content)
-  ? t.outputs
-  : [...t.outputs, event.content] // append if streaming
-          }
-        : t
-    )
-  );
-  break;
+      case "partial_output":
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === event.task_id
+              ? {
+                  ...t,
+                  outputs: event.is_final
+                    ? [event.content]
+                    : t.outputs.includes(event.content)
+                    ? t.outputs
+                    : [...t.outputs, event.content]
+                }
+              : t
+          )
+        );
+        break;
 
       case "run_complete":
         setRun((prev) => ({ ...prev, status: "complete" }));
@@ -94,7 +109,7 @@ case "partial_output":
 
       {/* HEADER */}
       <div className="border-b border-slate-700 p-4">
-        <Header run={run} />
+        <Header run={run} time={time} />
       </div>
 
       {/* THOUGHT */}
@@ -107,8 +122,9 @@ case "partial_output":
       {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
-        {/* TASKS */}
+        {/* TASK SECTION */}
         <div className="flex-1 overflow-y-auto p-4">
+          <p className="text-xs text-gray-400 mb-2">Task Execution</p>
           <Tasklist tasks={tasks} />
         </div>
 
